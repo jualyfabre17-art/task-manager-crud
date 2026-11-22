@@ -5,36 +5,11 @@ let currentFilter = "all";
 const taskForm = document.getElementById("task-form");
 const taskInput = document.getElementById("task-input");
 const taskList = document.getElementById("task-list");
+const errorMessage = document.getElementById("error-message");
 const filterButtons = document.querySelectorAll("[data-filter]");
 
 function saveTasks() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-}
-
-function getFilteredTasks() {
-  if (currentFilter === "pending") {
-    return tasks.filter((t) => !t.completed);
-  }
-  if (currentFilter === "completed") {
-    return tasks.filter((t) => t.completed);
-  }
-  return tasks;
-}
-
-function renderTasks() {
-  taskList.innerHTML = "";
-  const visibleTasks = getFilteredTasks();
-
-  visibleTasks.forEach((task) => {
-    const li = document.createElement("li");
-    const span = document.createElement("span");
-    span.textContent = task.title;
-    if (task.completed) {
-      span.classList.add("completed");
-    }
-    li.appendChild(span);
-    taskList.appendChild(li);
-  });
 }
 
 function createTask(title) {
@@ -48,22 +23,15 @@ function createTask(title) {
   renderTasks();
 }
 
-filterButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    currentFilter = btn.dataset.filter;
-    renderTasks();
-  });
-});
-
-taskForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const title = taskInput.value;
-  if (!title.trim()) return;
-  createTask(title);
-  taskInput.value = "";
-});
-
-renderTasks();
+function getFilteredTasks() {
+  if (currentFilter === "pending") {
+    return tasks.filter((t) => !t.completed);
+  }
+  if (currentFilter === "completed") {
+    return tasks.filter((t) => t.completed);
+  }
+  return tasks;
+}
 
 function toggleTaskStatus(id) {
   tasks = tasks.map((task) =>
@@ -114,17 +82,46 @@ function renderTasks() {
     editBtn.textContent = "Editar";
     editBtn.addEventListener("click", () => editTaskTitle(task.id));
 
-    actions.appendChild(toggleBtn);
-    actions.appendChild(editBtn);
-
-    li.appendChild(span);
-    li.appendChild(actions);
-    taskList.appendChild(li);
-
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.textContent = "Eliminar";
     deleteBtn.addEventListener("click", () => deleteTask(task.id));
+
+    actions.appendChild(toggleBtn);
+    actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
+
+    li.appendChild(span);
+    li.appendChild(actions);
+    taskList.appendChild(li);
   });
 }
+
+filterButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    currentFilter = btn.dataset.filter;
+    renderTasks();
+  });
+});
+
+taskForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const title = taskInput.value;
+
+  if (!title.trim()) {
+    if (errorMessage) {
+      errorMessage.textContent = "El titulo de la tarea no puede estar vacío.";
+    }
+    taskInput.focus();
+    return;
+  }
+
+  if (errorMessage) {
+    errorMessage.textContent = "";
+  }
+
+  createTask(title);
+  taskInput.value = "";
+});
+
+renderTasks();
